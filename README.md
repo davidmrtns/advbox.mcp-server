@@ -37,6 +37,17 @@ npm start
 
 Browsers send an `Origin` header; non-browser MCP clients normally do not. For a proxy or public deployment, configure `ALLOWED_HOSTS` and `ALLOWED_ORIGINS` for the actual public hostnames instead of allowing all origins.
 
+## Docker
+
+Build and run the minimal production image:
+
+```bash
+docker build -t advbox-mcp-server .
+docker run --rm -p 3000:3000 --env-file .env advbox-mcp-server
+```
+
+The container binds to `0.0.0.0:3000` and exposes `/health/live` and `/health/ready`.
+
 ## Observability
 
 - `/health/live`: liveness check; no Host or Origin validation is required.
