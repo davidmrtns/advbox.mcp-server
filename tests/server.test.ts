@@ -20,7 +20,7 @@ async function waitForServer() {
   throw new Error('MCP server did not start on port 3000');
 }
 
-test('lists and calls the add_note tool', async () => {
+test('lists and calls an Advbox tool', async () => {
   const server = spawn(process.execPath, ['--import', 'tsx', 'src/main.ts'], {
     cwd: process.cwd(),
     stdio: 'ignore',
@@ -33,14 +33,18 @@ test('lists and calls the add_note tool', async () => {
     await client.connect(new StreamableHTTPClientTransport(new URL(baseUrl)));
 
     const tools = await client.listTools();
-    assert.ok(tools.tools.some((tool) => tool.name === 'add_note'));
+    assert.ok(tools.tools.some((tool) => tool.name === 'configuracoes_conta'));
 
     const result = await client.callTool({
-      name: 'add_note',
-      arguments: { text: 'hello' },
+      name: 'configuracoes_conta',
+      arguments: {},
     });
 
-    assert.deepEqual(result.content, [{ type: 'text', text: 'Saved: hello' }]);
+    assert.equal(result.isError, true);
+    assert.deepEqual(result.content, [{
+      type: 'text',
+      text: 'Token da ADVBOX não configurado. Defina ADVBOX_TOKEN no ambiente do servidor.'
+    }]);
   } finally {
     await client.close();
     server.kill();
