@@ -8,7 +8,7 @@
     "start": "node --env-file-if-exists=.env --import tsx src/main.ts",
     "start:prod": "node dist/main.js",
     "test": "tsx --test tests/**/*.test.ts",
-    "inspect": "concurrently -k -n server,inspector \"npm:start\" \"npx @modelcontextprotocol/inspector --transport http --server-url http://127.0.0.1:3000/mcp\""
+    "inspect": "./scripts/inspect.sh"
   },
   "keywords": [],
   "author": "",

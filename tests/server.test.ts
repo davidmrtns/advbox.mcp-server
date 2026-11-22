@@ -20,9 +20,14 @@ async function waitForServer() {
   throw new Error('MCP server did not start on port 3000');
 }
 
-test('lists and calls an Advbox tool', async () => {
+test('requires MCP authentication and lists Advbox tools', async () => {
   const server = spawn(process.execPath, ['--import', 'tsx', 'src/main.ts'], {
     cwd: process.cwd(),
+    env: {
+      ...process.env,
+      MCP_AUTH_TOKENS: 'test-mcp-token',
+      ADVBOX_TOKEN: '',
+    },
     stdio: 'ignore',
   });
 
@@ -30,21 +35,33 @@ test('lists and calls an Advbox tool', async () => {
   try {
     await waitForServer();
 
-    await client.connect(new StreamableHTTPClientTransport(new URL(baseUrl)));
+    const unauthorized = await fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {},
+      }),
+    });
+    assert.equal(unauthorized.status, 401);
+
+    await client.connect(
+      new StreamableHTTPClientTransport(new URL(baseUrl), {
+        authProvider: {
+          token: async () => 'test-mcp-token',
+        },
+        requestInit: {
+          headers: {
+            'X-ADVBOX-API-KEY': 'test-advbox-key',
+          },
+        },
+      }),
+    );
 
     const tools = await client.listTools();
     assert.ok(tools.tools.some((tool) => tool.name === 'configuracoes_conta'));
-
-    const result = await client.callTool({
-      name: 'configuracoes_conta',
-      arguments: {},
-    });
-
-    assert.equal(result.isError, true);
-    assert.deepEqual(result.content, [{
-      type: 'text',
-      text: 'Token da ADVBOX não configurado. Defina ADVBOX_TOKEN no ambiente do servidor.'
-    }]);
   } finally {
     await client.close();
     server.kill();

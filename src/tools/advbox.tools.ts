@@ -227,7 +227,17 @@ for (const definition of definitions) {
       idempotentHint: true,
       openWorldHint: true,
     },
-    handler: async (input) => {
+    handler: async (input, extra) => {
+      const advboxApiKey = (
+        extra as {
+          http?: {
+            authInfo?: {
+              advboxApiKey?: string;
+            };
+          };
+        } | undefined
+      )?.http?.authInfo?.advboxApiKey;
+
       const args = {
         ...(definition.defaults ?? {}),
         ...(input as Record<string, unknown>),
@@ -250,7 +260,7 @@ for (const definition of definitions) {
         delete args.status;
       }
 
-      const result = await advboxService.get(definition.path, args);
+      const result = await advboxService.get(definition.path, args, advboxApiKey);
 
       return {
         isError: !result.ok,

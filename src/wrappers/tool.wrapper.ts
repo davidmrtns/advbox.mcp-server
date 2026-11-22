@@ -10,7 +10,10 @@ export interface McpToolConfig<TSchema extends z.ZodType = z.ZodType> {
   annotations?: unknown;
   icons?: unknown[];
   _meta?: Record<string, unknown>;
-  handler: (args: z.infer<TSchema>) => unknown | Promise<unknown>;
+  handler: (
+    args: z.infer<TSchema>,
+    extra?: unknown,
+  ) => unknown | Promise<unknown>;
 }
 
 interface RegisteredTool {
@@ -24,7 +27,7 @@ interface RegisteredTool {
     icons?: unknown[];
     _meta?: Record<string, unknown>;
   };
-  handler: (args: never) => unknown;
+  handler: (args: never, extra?: never) => unknown;
 }
 
 const registeredTools: RegisteredTool[] = [];
@@ -47,7 +50,7 @@ export function McpTool<TSchema extends z.ZodType>(
       icons: config.icons,
       _meta: config._meta,
     },
-    handler: config.handler as (args: never) => unknown,
+    handler: config.handler as (args: never, extra?: never) => unknown,
   });
 
   return config.handler;

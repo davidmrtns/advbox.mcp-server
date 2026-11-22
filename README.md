@@ -15,6 +15,16 @@ npm start
 npm run inspect
 ```
 
+For `npm run inspect`, configure these values in `.env`:
+
+```env
+MCP_AUTH_TOKENS=lmr-token-1
+MCP_INSPECT_TOKEN=lmr-token-1
+ADVBOX_TOKEN=your-personal-advbox-api-key
+```
+
+The Inspector will receive the MCP bearer token and ADVBOX API key automatically as request headers.
+
 The MCP endpoint is available at `http://127.0.0.1:3000/mcp` by default.
 
 ## Configuration
@@ -24,6 +34,7 @@ The MCP endpoint is available at `http://127.0.0.1:3000/mcp` by default.
 - `ALLOWED_HOSTS`: comma-separated hostnames accepted by the `Host` header. Default: `localhost,127.0.0.1,[::1]`.
 - `ALLOWED_ORIGINS`: comma-separated origin hostnames accepted by the `Origin` header. Default: `localhost,127.0.0.1,[::1]`.
 - `LOG_LEVEL`: structured log level: `debug`, `info`, `warn`, or `error`. Default: `info`.
+- `MCP_AUTH_TOKENS`: comma-separated bearer tokens allowed to call `/mcp`. Empty by default, which fails closed.
 
 Example for a container exposed through a public domain:
 
@@ -60,7 +71,18 @@ The container binds to `0.0.0.0:3000` and exposes `/health/live` and `/health/re
 
 The server exposes read-only tools for account settings, contacts, lawsuits, movements, tasks, transactions and documents.
 
-Set `ADVBOX_TOKEN` and optionally `ADVBOX_API_URL` in `.env`. Requests are limited to 30 per minute per server process and API responses are truncated above 150,000 characters.
+Set `ADVBOX_API_URL` and use `X-ADVBOX-API-KEY` on each MCP request with the user's ADVBOX API key. `ADVBOX_TOKEN` can be used only as an optional fallback for local development.
+
+MCP clients must send:
+
+```http
+Authorization: Bearer <MCP_AUTH_TOKEN>
+X-ADVBOX-API-KEY: <ADVBOX_API_KEY>
+```
+
+These secrets must not be written to logs or included in URLs.
+
+Requests are limited to 30 per minute per server process and API responses are truncated above 150,000 characters.
 
 ## HTTP utilities and API services
 

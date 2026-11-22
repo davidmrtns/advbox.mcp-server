@@ -35,11 +35,17 @@ export class AdvboxService {
     });
   }
 
-  async get(pathTemplate: string, args: Record<string, unknown> = {}): Promise<AdvboxResult> {
-    if (!this.token) {
+  async get(
+    pathTemplate: string,
+    args: Record<string, unknown> = {},
+    requestToken?: string,
+  ): Promise<AdvboxResult> {
+    const effectiveToken = requestToken?.trim() || this.token;
+
+    if (!effectiveToken) {
       return {
         ok: false,
-        text: 'Token da ADVBOX não configurado. Defina ADVBOX_TOKEN no ambiente do servidor.',
+        text: 'Token da ADVBOX não configurado. Envie o header X-ADVBOX-API-KEY.',
       };
     }
 
@@ -66,6 +72,9 @@ export class AdvboxService {
         const result = await this.http.get<unknown>(path, {
           method: 'GET',
           redirect: 'manual',
+          headers: {
+            Authorization: `Bearer ${effectiveToken}`,
+          },
         });
 
         if (result === undefined) {

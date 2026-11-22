@@ -9,7 +9,7 @@ import handler from './server.js';
 import { getServerConfig, MCP_PATH } from './config/server.config.js';
 import { Logger, parseLogLevel } from './utils/logger.js';
 
-const { host, port, allowedHosts, allowedOrigins } = getServerConfig();
+const { host, port, allowedHosts, allowedOrigins, mcpAuthTokens } = getServerConfig();
 const logger = new Logger(parseLogLevel(process.env.LOG_LEVEL));
 
 const nodeHandler = toNodeHandler(handler);
@@ -52,6 +52,59 @@ const server = createServer((req, res) => {
     res.end(JSON.stringify({ error: 'Not Found', requestId }));
     return;
   }
+
+  const authorization = req.headers.authorization;
+  const mcpToken = authorization?.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length).trim()
+    : undefined;
+
+  if (!mcpToken || !mcpAuthTokens.includes(mcpToken)) {
+    res.writeHead(401, {
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'Bearer',
+      'x-request-id': requestId,
+    });
+    res.end(JSON.stringify({
+      jsonrpc: '2.0',
+      error: { code: -32001, message: 'Unauthorized: invalid MCP bearer token' },
+      id: null,
+    }));
+    return;
+  }
+
+  const advboxApiKeyHeader = req.headers['x-advbox-api-key'];
+  const advboxApiKey = Array.isArray(advboxApiKeyHeader)
+    ? advboxApiKeyHeader[0]?.trim()
+    : advboxApiKeyHeader?.trim();
+
+  if (!advboxApiKey) {
+    res.writeHead(401, {
+      'Content-Type': 'application/json',
+      'x-request-id': requestId,
+    });
+    res.end(JSON.stringify({
+      jsonrpc: '2.0',
+      error: { code: -32001, message: 'Unauthorized: missing X-ADVBOX-API-KEY header' },
+      id: null,
+    }));
+    return;
+  }
+
+  const authenticatedRequest = req as typeof req & {
+    auth?: {
+      token: string;
+      clientId: string;
+      scopes: string[];
+      advboxApiKey: string;
+    };
+  };
+
+  authenticatedRequest.auth = {
+    token: mcpToken,
+    clientId: 'mcp-api-key-client',
+    scopes: ['mcp'],
+    advboxApiKey,
+  };
 
   void Promise.resolve(nodeHandler(req, res)).catch((error) => {
     logger.error('Node HTTP handler error', error, { requestId });

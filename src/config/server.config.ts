@@ -7,6 +7,7 @@ export interface ServerConfig {
   port: number;
   allowedHosts: string[];
   allowedOrigins: string[];
+  mcpAuthTokens: string[];
 }
 
 function parseAllowedValues(value: string | undefined, defaults: string[]): string[] {
@@ -34,5 +35,9 @@ export function getServerConfig(env: NodeJS.ProcessEnv = process.env): ServerCon
     port: parsePort(env.PORT),
     allowedHosts: parseAllowedValues(env.ALLOWED_HOSTS, DEFAULT_ALLOWED_HOSTS),
     allowedOrigins: parseAllowedValues(env.ALLOWED_ORIGINS, DEFAULT_ALLOWED_HOSTS),
+    mcpAuthTokens: (env.MCP_AUTH_TOKENS ?? '')
+      .split(',')
+      .map((token) => token.trim())
+      .filter(Boolean),
   };
 }
