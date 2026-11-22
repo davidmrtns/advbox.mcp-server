@@ -7,16 +7,20 @@ import {
 } from '@modelcontextprotocol/client';
 
 const baseUrl = 'http://127.0.0.1:3000/mcp';
+const healthUrl = 'http://127.0.0.1:3000/health/live';
 
-async function waitForServer() {
+async function waitForServer(): Promise<void> {
   for (let attempt = 0; attempt < 40; attempt++) {
     try {
-      await fetch(baseUrl);
-      return;
+      const response = await fetch(healthUrl);
+      if (response.ok) return;
     } catch {
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Server not listening yet.
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
+
   throw new Error('MCP server did not start on port 3000');
 }
 
@@ -64,6 +68,9 @@ test('requires MCP authentication and lists Advbox tools', async () => {
     assert.ok(tools.tools.some((tool) => tool.name === 'configuracoes_conta'));
   } finally {
     await client.close();
-    server.kill();
+
+    if (server.exitCode === null) {
+      server.kill();
+    }
   }
 });

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "build:docker": "tsc --outDir dist --sourceMap false --declaration false --declarationMap false",
+    "build:test": "tsc -p tests/tsconfig.json",
     "start": "node --env-file-if-exists=.env --import tsx src/main.ts",
     "start:prod": "node dist/main.js",
     "test": "tsx --test tests/**/*.test.ts",
